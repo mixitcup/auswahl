@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mix it Cup Team Selection</title>
+    <link rel="stylesheet" href="spreadsheet.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .settings {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .setting {
+            flex: 1;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .teams-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .team-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .team-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2em;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .team-member.direct {
+            border-left-color: #4CAF50;
+        }
+
+        .team-member.filled {
+            border-left-color: #FF9800;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .member-uni {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .member-type {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .member-type.direct {
+            background: #e8f5e9;
+            color: #4CAF50;
+        }
+
+        .member-type.filled {
+            background: #fff3e0;
+            color: #FF9800;
+        }
+
+        .stats {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 20px;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .top-nav {
+            width: 100%;
+            padding: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 10000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 25px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-left: 30px;
+            padding-left: 30px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .nav-links-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links-left .nav-link {
+            margin-left: 30px;
+        }
+
+        .nav-links-right {
+            display: flex;
+            align-items: center;
+            margin-right: 30px;
+        }
+
+        .nav-links-right .nav-link {
+            padding-left: 30px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-links-left">
+        </div>
+        <div class="nav-links-right">
+            <a href="https://github.com/mixitcup/mixitcup_selection" target="_blank" class="nav-link">
+                Quelltext
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>🏆 Mix it Cup-Teamauswahl</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <div class="spreadsheet-input">
+                    <div class="table-header">
+                        <div>University</div>
+                        <div>Person</div>
+                    </div>
+                    <div id="dataGrid" class="data-grid"></div>
+                    <div class="grid-footer">
+                        <button type="button" onclick="spreadsheetGrid.clear()">Zurücksetzen</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings">
+                <div class="setting">
+                    <label for="teamSize">Teamgröße:</label>
+                    <input type="number" id="teamSize" value="5" min="2" max="20">
+                </div>
+                <div class="setting">
+                    <label for="seed">Zufallsstartwert:</label>
+                    <input type="text" id="seed" placeholder="Leer lassen für 'echten' Zufall" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
+            </div>
+            
+            <button onclick="generateTeams()">Teams erstellen</button>
+            
+            <button id="exportTeamsBtn" onclick="exportTeams()" style="background: #4CAF50; margin-top: 10px; display: none;">📥 Teams als Tabelle exportieren (.csv)</button>
+        </div>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalPeople">0</div>
+                    <div class="stat-label">Teilnehmende</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalTeams">0</div>
+                    <div class="stat-label">Teams</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="filledMembers">0</div>
+                    <div class="stat-label">Aufgefüllte Personen</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="teamsContainer" class="teams-container"></div>
+        <div id="loading" class="loading" style="display: none;"></div>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script src="spreadsheet.js"></script>
+    <script>
+        // Spreadsheet grid instance
+        const spreadsheetGrid = new SpreadsheetGrid();
+        
+        // Store generated teams for export
+        let generatedTeams = null;
+        
+        // Seedable random number generator
+        let seedValue = null;
+        
+        function setSeed(seed) {
+            if (seed && seed.trim() !== '') {
+                seedValue = seed;
+            } else {
+                seedValue = null;
+            }
+        }
+        
+        function seededRandom() {
+            if (seedValue === null) {
+                return Math.random();
+            }
+            
+            // Simple seeded random using mulberry32 algorithm
+            let hash = 0;
+            for (let i = 0; i < seedValue.length; i++) {
+                const char = seedValue.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            
+            let x = Math.sin(hash) * 10000;
+            return x - Math.floor(x);
+        }
+        
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(seededRandom() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Initialize grid with default data
+        const defaultData = [
+            ["Braunschweig", "Person 1"],
+            ["Braunschweig", "Person 2"],
+            ["Braunschweig", "Person 3"],
+            ["Braunschweig", "Person 4"],
+            ["Münster", "Person 5"],
+            ["Münster", "Person 6"],
+            ["Münster", "Person 7"],
+            ["Münster", "Person 8"],
+            ["Dortmund", "Person 9"],
+            ["Dortmund", "Person 10"],
+            ["Dortmund", "Person 11"],
+            ["Dortmund", "Person 12"],
+            ["Berlin", "Person 13"],
+            ["Berlin", "Person 14"],
+            ["Hannover", "Person 15"],
+            ["Hannover", "Person 16"],
+            ["Stuttgart", "Person 17"],
+            ["Stuttgart", "Person 18"],
+            ["Stuttgart", "Person 19"],
+            ["Kiel", "Person 20"],
+            ["Kiel", "Person 21"],
+            ["Kiel", "Person 22"],
+            ["Kiel", "Person 23"],
+            ["Karlsruhe", "Person 24"],
+            ["Bochum", "Person 25"],
+            ["Münster", "Person 26"],
+            ["Münster", "Person 27"],
+            ["Münster", "Person 28"],
+            ["Karlsruhe", "Person 29"],
+            ["Wuppertal", "Person 30"],
+            ["Wuppertal", "Person 31"],
+            ["Wuppertal", "Person 32"]
+        ];
+
+        // Initialize grid on page load
+        window.onload = function() {
+            spreadsheetGrid.init(defaultData);
+        };
+
+        // Generate teams using the algorithm
+        function generateTeams() {
+            // Clear previous results
+            document.getElementById('teamsContainer').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+            
+            // Get seed from input
+            const seed = document.getElementById('seed').value;
+            setSeed(seed);
+            
+            // Get data from grid
+            const { unis, personen } = spreadsheetGrid.getData();
+            const teamSize = parseInt(document.getElementById('teamSize').value) || 5;
+            
+            if (unis.length === 0 || personen.length === 0) {
+                showError('Please enter university and person data.');
+                return;
+            }
+            
+            if (unis.length !== personen.length) {
+                showError(`University count (${unis.length}) doesn't match person count (${personen.length}).`);
+                return;
+            }
+            
+            if (teamSize < 2) {
+                showError('Team size must be at least 2.');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            
+            // Use setTimeout to allow UI to update before heavy computation
+            setTimeout(() => {
+                try {
+                    // Group people by university
+                    const allePersonenNachUnis = {};
+                    for (let i = 0; i < unis.length; i++) {
+                        const uni = unis[i];
+                        const person = personen[i];
+                        if (!allePersonenNachUnis[uni]) {
+                            allePersonenNachUnis[uni] = [];
+                        }
+                        allePersonenNachUnis[uni].push(person);
+                    }
+                    
+                    // Calculate number of teams (ceiling division)
+                    const anzahlTeams = Math.ceil(personen.length / teamSize);
+                    
+                    // Sort universities by number of people (descending)
+                    const unisSortiertNachPersonenzahl = Object.keys(allePersonenNachUnis)
+                        .sort((a, b) => allePersonenNachUnis[b].length - allePersonenNachUnis[a].length);
+                    
+                    // Initialize empty teams
+                    const teamsNachUni = Array.from({ length: anzahlTeams }, () => []);
+                    
+                    // Distribute people from universities with most members first
+                    for (const uni of unisSortiertNachPersonenzahl) {
+                        const verbleibendePersonen = shuffle(allePersonenNachUnis[uni]);
+                        
+                        while (verbleibendePersonen.length > 0) {
+                            const nochFreieTeams = teamsNachUni
+                                .map((team, index) => ({ index, length: team.length }))
+                                .filter(team => team.length < teamSize);
+                            
+                            const zuVerteilendePersonenMenge = Math.min(
+                                nochFreieTeams.length,
+                                verbleibendePersonen.length
+                            );
+                            
+                            const zuVerteilendePersonen = verbleibendePersonen.slice(0, zuVerteilendePersonenMenge);
+                            const verbleibendePersonenRest = verbleibendePersonen.slice(zuVerteilendePersonenMenge);
+                            
+                            const gewaehlteTeams = shuffle(nochFreieTeams)
+                                .slice(0, zuVerteilendePersonenMenge)
+                                .map(item => item.index);
+                            
+                            for (let i = 0; i < zuVerteilendePersonen.length; i++) {
+                                teamsNachUni[gewaehlteTeams[i]].push({
+                                    uni: uni,
+                                    person: zuVerteilendePersonen[i],
+                                    art: 'direkt'
+                                });
+                            }
+                            
+                            verbleibendePersonen.length = 0;
+                            verbleibendePersonen.push(...verbleibendePersonenRest);
+                        }
+                    }
+                    
+                    // Fill remaining spots with random people from different universities
+                    // First, create a shuffled index array for all people
+                    const personenIndices = shuffle(Array.from({ length: personen.length }, (_, i) => i));
+                    let personenIndexPointer = 0;
+                    
+                    for (const team of teamsNachUni) {
+                        while (team.length < teamSize) {
+                            const teamUnis = team.map(member => member.uni);
+                            
+                            // Find next person not in team
+                            let attempts = 0;
+                            while (attempts < personen.length) {
+                                const neuePersonIndex = personenIndices[personenIndexPointer % personen.length];
+                                personenIndexPointer++;
+                                
+                                if (!teamUnis.includes(unis[neuePersonIndex])) {
+                                    team.push({
+                                        uni: unis[neuePersonIndex],
+                                        person: personen[neuePersonIndex],
+                                        art: 'aufgefuellt'
+                                    });
+                                    break;
+                                }
+                                attempts++;
+                            }
+                            
+                            // If we couldn't find anyone, break to avoid infinite loop
+                            if (attempts >= personen.length) {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Display results
+                    displayResults(teamsNachUni, personen.length);
+                    
+                } catch (error) {
+                    showError('An error occurred: ' + error.message);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 100);
+        }
+        
+        function displayResults(teams, totalPeople) {
+            const teamsContainer = document.getElementById('teamsContainer');
+            teamsContainer.innerHTML = '';
+            
+            let filledCount = 0;
+            
+            teams.forEach((team, index) => {
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-card';
+                
+                let membersHTML = '';
+                team.forEach(member => {
+                    if (member.art !== 'direkt') filledCount++;
+                    
+                    membersHTML += `
+                        <div class="team-member ${member.art}">
+                            <div class="member-info">
+                                <div class="member-name">${member.person}</div>
+                                <div class="member-uni">${member.uni}</div>
+                            </div>
+                            <span class="member-type ${member.art}">${member.art === 'direkt' ? 'Direkt' : 'Aufgefüllt'}</span>
+                        </div>
+                    `;
+                });
+                
+                teamCard.innerHTML = `
+                    <div class="team-header">Team ${index + 1}</div>
+                    ${membersHTML}
+                `;
+                
+                teamsContainer.appendChild(teamCard);
+            });
+            
+            // Update stats
+            document.getElementById('stats').style.display = 'block';
+            document.getElementById('totalPeople').textContent = totalPeople;
+            document.getElementById('totalTeams').textContent = teams.length;
+            document.getElementById('filledMembers').textContent = filledCount;
+            
+            // Store teams for export
+            generatedTeams = teams;
+            
+            // Show export button
+            document.getElementById('exportTeamsBtn').style.display = 'block';
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function exportTeams() {
+            if (!generatedTeams) {
+                alert('No teams to export. Please generate teams first.');
+                return;
+            }
+            
+            let csvContent = 'Team\tUniversity\tPerson\tType\n';
+            
+            generatedTeams.forEach((team, teamIndex) => {
+                team.forEach((member, memberIndex) => {
+                    csvContent += `${teamIndex + 1}\t${member.uni}\t${member.person}\t${member.art === 'direkt' ? 'Direct' : 'Filled'}\n`;
+                });
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'mixitcup_teams.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`Successfully exported ${generatedTeams.length} teams to CSV file!`);
+        }
+    </script>
+</body>
+</html>
