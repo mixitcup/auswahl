@@ -1,67 +1,25 @@
-.spreadsheet-input {
-    border: 2px solid #ddd;
+#fileHint, #importStatus {
+    color: #444;
+    margin-bottom: .7rem;
+}
+#registrationsFile { max-width: 100%; font: inherit; }
+#resetBtn {
+    width: auto;
+    margin: .5rem 0;
+    padding: .5rem 1rem;
+    font-size: .9rem;
+    background: #596479;
+}
+#importStatus:not(:empty) { margin-top: 1rem; }
+#preview {
+    overflow: auto;
+    max-height: 18rem;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    overflow: hidden;
 }
-
-.table-header {
-    display: flex;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-weight: 600;
-}
-
-.table-header div {
-    flex: 1;
-    padding: 12px;
-    text-align: center;
-}
-
-.data-grid {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.data-row {
-    display: flex;
-    border-bottom: 1px solid #eee;
-}
-
-.data-row input {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    border-right: 1px solid #eee;
-    font-size: 14px;
-    outline: none;
-}
-
-.data-row input:focus {
-    background: #f5f9ff;
-}
-
-.data-row input:last-child {
-    border-right: none;
-}
-
-.grid-footer {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    background: #f8f9fa;
-}
-
-.grid-footer button {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background 0.2s;
-}
-
-.grid-footer button:hover {
-    background: #5a6268;
-}
+#preview table { border-collapse: collapse; width: 100%; }
+#preview caption { text-align: left; padding: .7rem; font-weight: 600; }
+#preview th, #preview td { padding: .5rem .7rem; text-align: left; border-top: 1px solid #eee; }
+#preview th { position: sticky; top: 0; background: #f5f6fb; }
+#exportTeamsBtn { margin-top: .7rem; background: #27783e; }
+#generateBtn:disabled { opacity: .55; cursor: default; transform: none; box-shadow: none; }

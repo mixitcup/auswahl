@@ -1,173 +1,133 @@
-// Spreadsheet Grid Module
-class SpreadsheetGrid {
-    constructor(gridId = 'dataGrid') {
-        this.gridId = gridId;
-        this.grid = document.getElementById(gridId);
-        this.defaultData = [];
-    }
+'use strict';
 
-    // Initialize grid with default data
-    init(defaultData = []) {
-        this.defaultData = defaultData;
-        this.render();
-    }
+const ignoredDuties = new Set(['#TeamOhneHüpfen', 'Unterstützer:in']);
 
-    render() {
-        this.grid.innerHTML = '';
-        
-        if (this.defaultData.length === 0) {
-            this.addRow();
-        } else {
-            this.defaultData.forEach(rowData => {
-                this.addRow(rowData);
-            });
-            this.addRow();
+function readRegistrations(bytes) {
+    let workbook;
+    try {
+        workbook = XLSX.read(bytes, { sheets: 'Meldungen', cellHTML: false, nodim: true });
+    } catch {
+        throw new Error('Die Datei konnte nicht als XLSX-Arbeitsmappe gelesen werden.');
+    }
+    if (workbook.bookType !== 'xlsx') {
+        throw new Error('Bitte eine XLSX-Arbeitsmappe auswählen.');
+    }
+    const sheet = workbook.Sheets.Meldungen;
+    if (!sheet) throw new Error('Das Tabellenblatt „Meldungen“ fehlt.');
+
+    // Start at Excel row 1 even if the first populated cell is farther down.
+    const rows = XLSX.utils.sheet_to_json(sheet, { range: 0, header: 1, blankrows: true });
+    const headers = (rows[0] || []).map(value => String(value).trim());
+    const required = ['Uni', 'Name', 'Pflicht'];
+    const columns = required.map(header => {
+        const index = headers.indexOf(header);
+        if (index === -1) throw new Error(`Zeile 1: Die Spalte „${header}“ fehlt.`);
+        if (headers.lastIndexOf(header) !== index) {
+            throw new Error(`Zeile 1: Die Spalte „${header}“ ist mehrfach vorhanden.`);
         }
-    }
+        return index;
+    });
 
-    addRow(data = ['', '']) {
-        const row = document.createElement('div');
-        row.className = 'data-row';
-        
-        row.innerHTML = `
-            <input type="text" class="uni-input" value="${data[0]}" placeholder="University">
-            <input type="text" class="person-input" value="${data[1]}" placeholder="Person">
-        `;
-        
-        // Add event listeners to detect when user finishes editing
-        const uniInput = row.querySelector('.uni-input');
-        const personInput = row.querySelector('.person-input');
-        
-        uniInput.addEventListener('blur', () => this.checkAndAddRow());
-        personInput.addEventListener('blur', () => this.checkAndAddRow());
-        
-        // Listen for paste events to detect multi-line pastes
-        uniInput.addEventListener('paste', (e) => this.handlePaste(e, uniInput, personInput));
-        personInput.addEventListener('paste', (e) => this.handlePaste(e, uniInput, personInput));
-        
-        this.grid.appendChild(row);
-    }
-
-    async handlePaste(event, uniInput, personInput) {
-        // Check if clipboard contains multiple lines
-        try {
-            const text = await navigator.clipboard.readText();
-            const lines = text.trim().split('\n');
-            console.log(lines);
-            
-            // If clipboard has multiple lines (more than 1 line) and current row is empty
-            if (lines.length > 1) {
-                // Prevent the default paste behavior
-                event.preventDefault();
-                // Use the spreadsheet paste logic
-                this.pasteFromSpreadsheet(text);
-            }
-        } catch (err) {
-            // Clipboard access denied or failed, let default paste happen
-            console.debug('Could not access clipboard for auto-paste detection');
-        }
-    }
-
-    checkAndAddRow() {
-        // Remove empty rows first
-        this.removeEmptyRows();
-        
-        // Check if last row has data
-        const rows = this.grid.querySelectorAll('.data-row');
-        if (rows.length > 0) {
-            const lastRow = rows[rows.length - 1];
-            const uniInput = lastRow.querySelector('.uni-input');
-            const personInput = lastRow.querySelector('.person-input');
-            
-            // If last row has data, add a new empty row
-            if (uniInput.value.trim() !== '' || personInput.value.trim() !== '') {
-                this.addRow();
-            }
-        }
-    }
-
-    removeEmptyRows() {
-        const rows = this.grid.querySelectorAll('.data-row');
-        rows.forEach(row => {
-            const rows_local = this.grid.querySelectorAll('.data-row');
-            // Don't remove the only row if there is only one
-            if (rows_local.length <= 1) {
-                return;
-            }
-
-            const uniInput = row.querySelector('.uni-input');
-            const personInput = row.querySelector('.person-input');
-            
-            // Remove row if both fields are empty
-            if (uniInput.value.trim() === '' && personInput.value.trim() === '') {
-                row.remove();
-            }
+    const registrations = [];
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row.some(value => String(value ?? '').trim() !== '')) continue;
+        if (ignoredDuties.has(String(row[columns[2]] ?? '').trim())) continue;
+        const [uni, name, tag] = columns.map((column, field) => {
+            const value = String(row[column] ?? '');
+            if (!value.trim()) throw new Error(`Zeile ${i + 1}: „${required[field]}“ fehlt.`);
+            return value;
         });
-    }
-
-    clear() {
-        this.grid.innerHTML = '';
-        this.addRow();
-    }
-
-    getData() {
-        const rows = this.grid.querySelectorAll('.data-row');
-        const unis = [];
-        const personen = [];
-        
-        rows.forEach(row => {
-            const uniInput = row.querySelector('.uni-input');
-            const personInput = row.querySelector('.person-input');
-            
-            const uni = uniInput.value.trim();
-            const person = personInput.value.trim();
-            
-            if (uni || person) {
-                unis.push(uni);
-                personen.push(person);
-            }
-        });
-        
-        return { unis, personen };
-    }
-
-    pasteFromSpreadsheet(text) {
-        const lines = text.trim().split('\n');
-        this.grid.innerHTML = '';
-        
-        lines.forEach(line => {
-            const cells = line.split('\t');
-            const uni = cells[0] ? cells[0].trim() : '';
-            const person = cells[1] ? cells[1].trim() : '';
-            this.addRow([uni, person]);
-        });
-        
-        // Remove any empty rows that might have been created
-        this.removeEmptyRows();
-        
-        // Add a new empty row at the end
-        this.addRow();
-    }
-
-    exportToSpreadsheet() {
-        const { unis, personen } = this.getData();
-        
-        let csvContent = 'University\tPerson\n';
-        for (let i = 0; i < Math.max(unis.length, personen.length); i++) {
-            csvContent += `${unis[i] || ''}\t${personen[i] || ''}\n`;
+        const match = /^\[(\d+)\]\s+\S/u.exec(tag.trim());
+        const level = match && Number(match[1]);
+        if (!Number.isSafeInteger(level)) {
+            throw new Error(`Zeile ${i + 1}: „Pflicht“ muss wie „[1] Eifrige Erdbeere“ aufgebaut sein.`);
         }
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'mixitcup_data.csv');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        return unis.length;
+
+        const fullName = name.trim();
+        const lastName = fullName.match(/\S+$/u)[0];
+        const firstName = fullName.slice(0, fullName.length - lastName.length).trimEnd();
+        registrations.push({ rowNumber: i + 1, uni, fullName, firstName, lastName, tag, level });
     }
+    if (!registrations.length) throw new Error('Das Tabellenblatt „Meldungen“ enthält keine Meldungen mit Levelnummer.');
+    return registrations;
+}
+
+function createRandom(seed) {
+    if (!seed.trim()) return Math.random;
+    let state = 2166136261;
+    for (const character of seed) {
+        state = Math.imul(state ^ character.codePointAt(0), 16777619);
+    }
+    // Mulberry32 advances once per draw, starting from the hash of the seed.
+    return () => {
+        state = (state + 0x6D2B79F5) | 0;
+        let value = Math.imul(state ^ (state >>> 15), 1 | state);
+        value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+function shuffle(items, random) {
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
+}
+
+function groupBy(items, key) {
+    const groups = new Map();
+    for (const item of items) {
+        if (!groups.has(item[key])) groups.set(item[key], []);
+        groups.get(item[key]).push(item);
+    }
+    return groups;
+}
+
+function createTeams(registrations, teamSize, seed = '') {
+    if (!Number.isInteger(teamSize) || teamSize < 2 || teamSize > 20) {
+        throw new Error('Bitte eine ganze Teamgröße zwischen 2 und 20 wählen.');
+    }
+    const random = createRandom(seed);
+    const result = [];
+    const levels = groupBy(registrations, 'level');
+    for (const level of [...levels.keys()].sort((a, b) => a - b)) {
+        const entries = levels.get(level);
+        const teams = Array.from({ length: Math.ceil(entries.length / teamSize) }, (_, i) => ({
+            id: `L${level}T${i + 1}`, level, members: []
+        }));
+        const universities = [...groupBy(entries, 'uni').values()].sort((a, b) => b.length - a.length);
+        for (const university of universities) {
+            shuffle(university, random);
+            // In each round, visit every team once. Prefer smaller teams and
+            // shuffle to break size ties. Before each round, all teams have
+            // received the same number of people from this university.
+            for (let start = 0; start < university.length; start += teams.length) {
+                const order = [...teams];
+                shuffle(order, random);
+                order.sort((a, b) => a.members.length - b.members.length);
+                const batch = university.slice(start, start + teams.length);
+                batch.forEach((person, i) => {
+                    const team = order[i];
+                    team.members.push(person);
+                });
+            }
+        }
+        for (const team of teams) result.push(team);
+    }
+    return result;
+}
+
+function createExportWorkbook(teams) {
+    const rows = [['Verein', 'Vorname', 'Nachname', 'Tags', 'Team-Nr']];
+    for (const team of teams) {
+        for (const person of team.members) {
+            rows.push([person.uni, person.firstName, person.lastName, person.tag, team.id]);
+        }
+    }
+    const sheet = XLSX.utils.aoa_to_sheet(rows);
+    sheet['!cols'] = [24, 22, 22, 36, 12].map(wch => ({ wch }));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, 'Teams');
+    return workbook;
 }
